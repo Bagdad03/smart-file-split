@@ -1,79 +1,79 @@
 # SmartFileSplit
 
-Windows-утилита с графическим окном для разбиения одного табличного файла
-(`.xlsx`, `.xls`, `.csv`) на несколько файлов. Задаёте **либо** максимум строк на
-файл, **либо** желаемое число выходных файлов — программа режет исходник на части.
+A Windows GUI utility that splits a single tabular file (`.xlsx`, `.xls`, `.csv`)
+into several files. You choose **either** a maximum number of rows per file **or** a
+desired number of output files, and the tool cuts the source into parts.
 
-Стек: **C# / .NET 10, WinForms**. Распространяется как самодостаточный единый `.exe`
-(не требует установленного .NET на машине пользователя).
+Stack: **C# / .NET 10, WinForms**. Distributed as a self-contained single `.exe`
+(no .NET installation required on the target machine).
 
-## Возможности
+## Features
 
-- Ввод: `.xlsx`, `.xls` (старый BIFF, без установленного Excel), `.csv`.
-- Два режима разбиения: по числу строк на файл или по числу выходных файлов.
-- Галочка «Первая строка — заголовок»: заголовок копируется в начало каждого
-  выходного файла и не считается строкой данных.
-- Выбор формата вывода (**CSV** или **XLSX**) независимо от формата входа.
-- Выбор листа для Excel-файлов с несколькими листами.
-- CSV: UTF-8 с BOM (дружелюбно к Excel), разделитель `,` или `;` (русская локаль).
-- **CSV → CSV** копируется дословно: значения, заключённые в кавычки в исходнике,
-  сохраняют кавычки.
-- **Вывод в XLSX** хранит значения как текст — ведущие нули и длинные коды
-  (`007`, номера договоров) не превращаются Excel'ем в числа.
-- Фоновое разбиение с индикатором прогресса, валидация и защита от перезаписи.
+- Input: `.xlsx`, `.xls` (legacy BIFF, no Excel required), `.csv`.
+- Two split modes: by max rows per file, or by number of output files.
+- "First row is a header" option: the header is copied to the top of every output
+  file and is not counted as a data row.
+- Output format (**CSV** or **XLSX**) is chosen independently of the input format.
+- Sheet selection for multi-sheet Excel workbooks.
+- CSV: UTF-8 with BOM (Excel-friendly), delimiter `,` or `;` (for Russian locale).
+- **CSV → CSV** is copied verbatim: values quoted in the source keep their quotes.
+- **XLSX output** stores values as text, so leading zeros and long codes
+  (`007`, contract numbers) are not turned into numbers by Excel.
+- Background splitting with a progress bar, input validation, and overwrite protection.
 
-## Требования
+## Requirements
 
-- Для **запуска готового `.exe`** — ничего (self-contained).
-- Для **сборки из исходников** — [.NET 10 SDK](https://dotnet.microsoft.com/download).
+- To **run the prebuilt `.exe`** — nothing (it is self-contained).
+- To **build from source** — [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
-## Сборка и тесты
+## Build and test
 
-Из корня репозитория:
+From the repository root:
 
 ```bash
-dotnet build                                 # собрать решение
-dotnet test                                  # прогнать юнит-тесты ядра
-dotnet run --project src/SmartFileSplit.App  # запустить GUI
+dotnet build                                 # build the solution
+dotnet test                                  # run the core unit tests
+dotnet run --project src/SmartFileSplit.App  # launch the GUI
 ```
 
-Собрать релизный единый `.exe` (запускается без установленного .NET):
+Build the release single-file `.exe` (runs without an installed .NET):
 
 ```bash
 dotnet publish src/SmartFileSplit.App -c Release -r win-x64 --self-contained true \
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-Готовый файл появится в
+The resulting file appears at
 `src/SmartFileSplit.App/bin/Release/net10.0-windows/win-x64/publish/SmartFileSplit.App.exe`.
 
-## Использование
+## Usage
 
-1. **Обзор…** у поля «Входной файл» — выберите `.xlsx`/`.xls`/`.csv`
-   (для Excel появится список листов).
-2. Выберите режим (максимум строк на файл / число файлов) и число.
-3. При необходимости включите «Первая строка — заголовок».
-4. Выберите формат вывода (CSV или XLSX) и, для CSV, разделитель (`,` или `;`).
-5. **Обзор…** у поля «Папка вывода».
-6. Нажмите **Разделить**.
+1. **Browse…** next to "Input file" — pick an `.xlsx`/`.xls`/`.csv`
+   (for Excel a sheet list appears).
+2. Choose the mode (max rows per file / number of files) and the number.
+3. Optionally enable "First row is a header".
+4. Choose the output format (CSV or XLSX) and, for CSV, the delimiter (`,` or `;`).
+5. **Browse…** next to "Output folder".
+6. Click **Split**.
 
-Выходные файлы именуются `{имя}_{номер}.{ext}`, начиная с 1, с ведущими нулями
-по числу частей (`_01`, `_02`, …).
+Output files are named `{name}_{index}.{ext}`, starting at 1, zero-padded to the
+part count (`_01`, `_02`, …).
 
-## Архитектура
+## Architecture
 
-Логика намеренно отделена от UI, чтобы ядро тестировалось без окна.
+The logic is deliberately separated from the UI so the core can be unit-tested
+without a window.
 
-- `src/SmartFileSplit.Core/` — библиотека без UI:
-  - `ITableReader` / `ITableWriter` — абстракции чтения/записи; `ReaderFactory`
-    выбирает ридер по расширению входа, `WriterFactory` — райтер по выбранному
-    формату вывода.
+- `src/SmartFileSplit.Core/` — UI-free library:
+  - `ITableReader` / `ITableWriter` — read/write abstractions; `ReaderFactory`
+    picks a reader by input extension, `WriterFactory` picks a writer by the chosen
+    output format.
   - `CsvTableReader` / `CsvTableWriter` (CsvHelper), `ExcelTableReader`
     (ExcelDataReader), `XlsxTableWriter` (ClosedXML), `WorkbookInspector`.
-  - `FileSplitter` — алгоритм разбиения с отчётом о прогрессе через `IProgress<int>`.
-- `src/SmartFileSplit.App/` — WinForms-приложение (`MainForm`).
-- `tests/SmartFileSplit.Core.Tests/` — xUnit-тесты ядра.
+  - `FileSplitter` — the splitting algorithm, reporting progress via `IProgress<int>`.
+- `src/SmartFileSplit.App/` — WinForms application (`MainForm`).
+- `tests/SmartFileSplit.Core.Tests/` — xUnit tests for the core.
 
-## Лицензия
+## License
 
 [MIT](LICENSE).
