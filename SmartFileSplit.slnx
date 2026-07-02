@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SmartFileSplit.App/SmartFileSplit.App.csproj" />
+    <Project Path="src/SmartFileSplit.Core/SmartFileSplit.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SmartFileSplit.Core.Tests/SmartFileSplit.Core.Tests.csproj" />
+  </Folder>
+</Solution>

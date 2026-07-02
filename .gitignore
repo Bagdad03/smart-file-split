@@ -1,0 +1,14 @@
+# Артефакты сборки .NET
+bin/
+obj/
+[Oo]ut/
+publish/
+
+# Файлы пользователя/IDE
+*.user
+.vs/
+.idea/
+*.iml
+
+# Прочее
+*.log
