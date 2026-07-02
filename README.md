@@ -59,6 +59,19 @@ The resulting file appears at
 Output files are named `{name}_{index}.{ext}`, starting at 1, zero-padded to the
 part count (`_01`, `_02`, …).
 
+### SmartScreen warning on first launch
+
+The `.exe` is not code-signed, so Windows Defender SmartScreen may show
+"Windows protected your PC" the first time you run it. This is expected for a
+freshly built, unsigned executable — it is not a virus. To run it:
+
+1. Click **More info**.
+2. Click **Run anyway**.
+
+Alternatively, unblock the file first: right-click the `.exe` → **Properties** →
+tick **Unblock** → OK (or run `Unblock-File "path\SmartFileSplit.App.exe"` in
+PowerShell).
+
 ## Architecture
 
 The logic is deliberately separated from the UI so the core can be unit-tested
