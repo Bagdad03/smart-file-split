@@ -4,12 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-The **Core library is implemented and fully unit-tested** (27 xUnit tests green):
-readers/writers (`CsvTableReader`/`CsvTableWriter`, `ExcelTableReader`/`XlsxTableWriter`),
-`ReaderFactory`/`WriterFactory`, `WorkbookInspector`, and the `FileSplitter` algorithm.
-The **App is still a WinForms stub** (`Form1`) — the UI (`MainForm`) and the single-file
-`.exe` publish are the next piece of work. The originally approved design lives at
+Feature-complete and shipped. Core and the WinForms App are both implemented and the
+core is covered by 37 green xUnit tests. Published as a self-contained single `.exe`
+to GitHub: <https://github.com/Bagdad03/smart-file-split> (release `v1.0.0` carries the
+`.exe`). The originally approved design lives at
 `C:\Users\lvv\.claude\plans\enumerated-juggling-curry.md`.
+
+Known follow-up: no test reads a real BIFF `.xls` fixture yet (all Excel fixtures are
+`.xlsx` written by ClosedXML), so the `ExcelEncoding`/CodePages path is untested — the
+one gap the reviews flagged and the user chose to defer.
 
 ## What this is
 
@@ -51,11 +54,22 @@ splitting logic is unit-testable without a window.
     format): `XlsxTableWriter` (**ClosedXML**) or `CsvTableWriter` (**CsvHelper**).
     Old `.xls` input is therefore re-emitted as `.xlsx` or `.csv`, never `.xls`.
   - `FileSplitter` is the core algorithm, decoupled from both ends via the reader/writer
-    interfaces and reports progress through `IProgress<int>`.
+    interfaces and reports progress through `IProgress<int>`. It makes **two passes**
+    over the input (first counts rows — needed for `partSize` in ByFileCount and for the
+    zero-pad width; second writes the parts). The split loops are **enumerator-driven**
+    (`while (hasMore)`, not `while (written < total)`) so a mismatch between passes can't
+    infinite-loop or lose rows. Progress is throttled to integer-percent changes via a
+    private `PercentReporter`.
   - `WorkbookInspector` lists sheets for Excel files (the UI lets the user pick one).
+  - `ExcelEncoding` registers `CodePagesEncodingProvider` once (required by
+    ExcelDataReader for legacy BIFF `.xls`).
 - `src/SmartFileSplit.App/` — WinForms `.exe` (`MainForm`, `Program.cs`). The UI builds
   a `SplitOptions` and runs `FileSplitter.Split` on a background thread (`Task.Run`),
-  feeding `IProgress<int>` to a ProgressBar.
+  feeding `IProgress<int>` to a ProgressBar. It also validates input, gates the CSV
+  delimiter on whether CSV is involved (input `.csv` **or** output CSV), and clears the
+  previous run's parts via `FindPreviousParts` — a strict regex `^{basename}_\d+\.{ext}$`
+  (not a `_*` glob) so it never deletes unrelated files or the input itself. The window
+  icon is taken from the executable's own icon.
 - `tests/SmartFileSplit.Core.Tests/` — xUnit tests against Core only.
 
 ### Splitting semantics (the part worth understanding before editing `FileSplitter`)
@@ -71,6 +85,10 @@ splitting logic is unit-testable without a window.
   algorithm — most edge-case tests hinge on it.
 - Output naming: `{basename}_{i}.{ext}` starting at 1, into a user-chosen folder, with
   the numeric suffix zero-padded to the part count (`_01`, `_02` once there are ≥10).
+- **CSV → CSV is a separate verbatim path** (`SplitCsvVerbatim` + `CsvTableReader.ReadRawRecords`):
+  raw records are copied byte-for-byte so original quoting is preserved (`"123"` stays
+  `"123"`). Any other combination (xlsx input, or output = XLSX) goes through the generic
+  reader/writer path. `IsVerbatimCsv` selects between them.
 
 ## Conventions
 
@@ -78,3 +96,10 @@ splitting logic is unit-testable without a window.
   to `;` for Russian Excel locales. The separator is part of `SplitOptions` and flows to
   both `CsvTableReader` and `CsvTableWriter` — keep read and write separators consistent.
 - The output format is independent of the input format; never assume they match.
+- Quoting/typing note: CSV quotes are *not* a type hint — Excel still reads `"123"` as a
+  number. To keep leading zeros / long codes as text, choose **XLSX** output;
+  `XlsxTableWriter` writes values as text (`SetValue(string)`).
+- Distribution: `SmartFileSplit.App.csproj` sets `EnableCompressionInSingleFile`
+  (published `.exe` ~52 MB instead of ~121 MB) and `ApplicationIcon` (`app.ico`). The
+  `.gitignore` keeps `bin/`, `obj/`, `publish/`, `*.exe` and IDE files out of the repo;
+  the `.exe` is distributed via GitHub Releases, not committed.
