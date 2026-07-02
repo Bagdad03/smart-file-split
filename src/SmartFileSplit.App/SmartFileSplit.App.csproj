@@ -10,6 +10,10 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Сжатие содержимого единого self-contained .exe (примерно вдвое меньше размер). -->
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <!-- Иконка исполняемого файла. -->
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 
 </Project>

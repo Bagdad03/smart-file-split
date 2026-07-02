@@ -9,6 +9,16 @@ public partial class MainForm : Form
     {
         InitializeComponent();
         UpdateDelimiterState();
+
+        // Иконку окна берём из иконки самого .exe (задана через ApplicationIcon).
+        try
+        {
+            Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        }
+        catch
+        {
+            // Отсутствие иконки не должно мешать запуску.
+        }
     }
 
     /// <summary>Выбор входного файла + заполнение списка листов для Excel.</summary>
