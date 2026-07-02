@@ -7,8 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Feature-complete and shipped. Core and the WinForms App are both implemented and the
 core is covered by 37 green xUnit tests. Published as a self-contained single `.exe`
 to GitHub: <https://github.com/Bagdad03/smart-file-split> (release `v1.0.0` carries the
-`.exe`). The originally approved design lives at
-`C:\Users\lvv\.claude\plans\enumerated-juggling-curry.md`.
+`.exe`). The design was captured in an approved plan kept locally, outside the repo.
 
 Known follow-up: no test reads a real BIFF `.xls` fixture yet (all Excel fixtures are
 `.xlsx` written by ClosedXML), so the `ExcelEncoding`/CodePages path is untested — the
